@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+
+	"google.golang.org/protobuf/proto"
 )
 
 // M is a convenience alias for quickly building a map structure that is going
@@ -54,6 +56,8 @@ func DefaultResponder(w http.ResponseWriter, r *http.Request, v interface{}) {
 		JSON(w, r, v)
 	case ContentTypeXML:
 		XML(w, r, v)
+	case ContentTypeProtoBuf:
+		ProtoBuf(w, r, v)
 	default:
 		JSON(w, r, v)
 	}
@@ -129,6 +133,22 @@ func XML(w http.ResponseWriter, r *http.Request, v interface{}) {
 	if !bytes.Contains(b[:findHeaderUntil], []byte("<?xml")) {
 		// No header found. Print it out first.
 		w.Write([]byte(xml.Header)) //nolint:errcheck
+	}
+
+	w.Write(b) //nolint:errcheck
+}
+
+// ProtoBuf writes 'v' as protobuf format to the response, setting the Content-Type as
+// application/x-protobuf.
+func ProtoBuf(w http.ResponseWriter, r *http.Request, v interface{}) {
+	w.Header().Set("Content-Type", "application/x-protobuf")
+	if status, ok := r.Context().Value(StatusCtxKey).(int); ok {
+		w.WriteHeader(status)
+	}
+
+	b, err := proto.Marshal(v.(proto.Message))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	w.Write(b) //nolint:errcheck

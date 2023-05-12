@@ -21,6 +21,7 @@ const (
 	ContentTypeJSON
 	ContentTypeXML
 	ContentTypeForm
+	ContentTypeProtoBuf
 	ContentTypeEventStream
 )
 
@@ -39,6 +40,8 @@ func GetContentType(s string) ContentType {
 		return ContentTypeForm
 	case "text/event-stream":
 		return ContentTypeEventStream
+	case "application/x-protobuf":
+		return ContentTypeProtoBuf
 	default:
 		return ContentTypeUnknown
 	}
