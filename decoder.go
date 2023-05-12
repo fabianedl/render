@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"errors"
+	"google.golang.org/protobuf/proto"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -31,6 +32,8 @@ func DefaultDecoder(r *http.Request, v interface{}) error {
 		err = DecodeXML(r.Body, v)
 	case ContentTypeForm:
 		err = DecodeForm(r.Body, v)
+	case ContentTypeProtoBuf:
+		err = DecodeProtoBuf(r.Body, v)
 	default:
 		err = errors.New("render: unable to automatically decode the request content type")
 	}
@@ -54,4 +57,15 @@ func DecodeXML(r io.Reader, v interface{}) error {
 func DecodeForm(r io.Reader, v interface{}) error {
 	decoder := form.NewDecoder(r) //nolint:errcheck
 	return decoder.Decode(v)
+}
+
+// DecodeProtoBuf decodes a given reader into an interface using the form decoder.
+func DecodeProtoBuf(r io.Reader, v interface{}) error {
+	bytes, err := io.ReadAll(r)
+	if err != nil {
+		return err
+	}
+
+	message := v.(proto.Message)
+	return proto.Unmarshal(bytes, message)
 }

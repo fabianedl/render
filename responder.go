@@ -141,14 +141,21 @@ func XML(w http.ResponseWriter, r *http.Request, v interface{}) {
 // ProtoBuf writes 'v' as protobuf format to the response, setting the Content-Type as
 // application/x-protobuf.
 func ProtoBuf(w http.ResponseWriter, r *http.Request, v interface{}) {
+	message, ok := v.(proto.Message)
+	if !ok {
+		http.Error(w, "the body is not message", http.StatusInternalServerError)
+		return
+	}
+
+	b, err := proto.Marshal(message)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/x-protobuf")
 	if status, ok := r.Context().Value(StatusCtxKey).(int); ok {
 		w.WriteHeader(status)
-	}
-
-	b, err := proto.Marshal(v.(proto.Message))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	w.Write(b) //nolint:errcheck
