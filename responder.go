@@ -34,7 +34,7 @@ func Status(r *http.Request, status int) {
 	*r = *r.WithContext(context.WithValue(r.Context(), StatusCtxKey, status))
 }
 
-// Respond handles streaming JSON and XML responses, automatically setting the
+// DefaultResponder handles streaming JSON and XML responses, automatically setting the
 // Content-Type based on request headers. It will default to a JSON response.
 func DefaultResponder(w http.ResponseWriter, r *http.Request, v interface{}) {
 	if v != nil {
@@ -141,6 +141,10 @@ func XML(w http.ResponseWriter, r *http.Request, v interface{}) {
 // ProtoBuf writes 'v' as protobuf format to the response, setting the Content-Type as
 // application/x-protobuf.
 func ProtoBuf(w http.ResponseWriter, r *http.Request, v interface{}) {
+	if v == nil {
+		return
+	}
+
 	message, ok := v.(proto.Message)
 	if !ok {
 		http.Error(w, "the body is not message", http.StatusInternalServerError)
